@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Carte Interactive : DAVRIL Xavier</title>
+    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            background: #67AFCB;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+        }
+
+        /* BOUTON ENREGISTRER CONTACT — EN HAUT À GAUCHE (VERSION XXL) */
+        .add-contact {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: #67AFCB;
+            color: #000;
+            padding: 26px 40px; /* 2× plus grand */
+            border-radius: 16px; /* arrondi plus premium */
+            font-size: 28px; /* 2× plus grand */
+            font-weight: 800;
+            text-decoration: none;
+            box-shadow: 0 8px 22px rgba(0,0,0,0.28);
+            display: inline-flex;
+            align-items: center;
+            gap: 14px;
+            letter-spacing: 0.4px;
+            z-index: 10;
+        }
+        
+        .add-contact:hover {
+            background: #7fc4df;
+        }
+
+        .container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            padding: clamp(28px, 4vw, 64px);
+            box-sizing: border-box;
+        }
+
+        model-viewer {
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        .default-view-btn {
+            position: absolute;
+            bottom: 32px;
+            left: 20px;
+            background: #67AFCB;
+            color: #000;
+            padding: 26px 40px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            z-index: 3;
+        }
+
+        .qr-link {
+            position: absolute;
+            bottom: 32px;
+            right: 20px;
+            background: #67AFCB;
+            color: #000;
+            padding: 26px 40px;
+            border-radius: 8px;
+            font-size: 14px;
+            text-decoration: none;
+            font-weight: 600;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            z-index: 3;
+        }
+
+
+        @media (max-width: 768px) {
+            .default-view-btn,
+            .qr-link {
+                bottom: 18px;
+                padding: 26px 40px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+
+        <!-- BOUTON ENREGISTRER CONTACT -->
+        <a class="add-contact" href="contact.vcf" download>
+            📇 Enregistrer le contact
+        </a>
+        
+        <model-viewer id="carte"
+            src="carte.glb"
+            camera-controls
+            touch-action="pan-y"
+            interaction-prompt="none"
+            exposure="1.1"
+            shadow-intensity="1"
+            camera-orbit="-180deg 0deg 0.55m"
+            camera-target="0m 0m 0m"
+            field-of-view="24deg"
+            min-camera-orbit="-Infinity 0deg auto"
+            max-camera-orbit="Infinity 180deg auto"
+            min-field-of-view="12deg"
+            max-field-of-view="45deg"
+            style="--poster-color: transparent;">
+        </model-viewer>
+
+        <button id="defaultViewBtn" class="default-view-btn" type="button">Vue par défaut</button>
+
+        <a class="qr-link" href="https://www.iadfrance.fr/conseiller-immobilier/xabi.davril" target="_blank" rel="noopener noreferrer">
+            Accéder au profil IAD
+        </a>
+        
+    </div>
+
+    <script>
+        const viewer = document.querySelector('#carte');
+        let hasInteracted = false;
+        let animationFrameId = null;
+
+        const profileUrl = 'https://www.iadfrance.fr/conseiller-immobilier/xabi.davril';
+        let pointerStart = null;
+
+
+        function getAutoViewForScreen() {
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+            const ratio = vw / vh;
+            const shortSide = Math.min(vw, vh);
+
+            // Zoom ajusté au plus près des bords, tout en gardant une petite marge en rotation
+            let radius = 0.62;
+            let fov = 26;
+
+            if (shortSide <= 420) {
+                radius = 0.74;
+                fov = 32;
+            } else if (shortSide <= 768) {
+                radius = 0.68;
+                fov = 30;
+            } else if (shortSide <= 1100) {
+                radius = 0.64;
+                fov = 28;
+            }
+
+            // Ecrans ultra-larges: léger recul de sécurité pour ne pas couper pendant les angles forts
+            if (ratio >= 1.8) {
+                radius += 0.01;
+                fov += 1;
+            }
+
+            return { radius, fov };
+        }
+
+        function applyAutoFitView() {
+            const { radius, fov } = getAutoViewForScreen();
+            applyOrbit(-180, 0, radius, fov);
+        }
+
+
+        function setDefaultView() {
+            hasInteracted = true;
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            applyAutoFitView();
+            viewer.setAttribute('interaction-prompt', 'auto');
+        }
+
+        function applyOrbit(theta, phi, radius, fov) {
+            viewer.cameraOrbit = `${theta}deg ${phi}deg ${radius.toFixed(2)}m`;
+            viewer.cameraTarget = '0m 0m 0m';
+            viewer.fieldOfView = `${fov}deg`;
+            viewer.jumpCameraToGoal();
+        }
+
+
+        window.addEventListener('resize', () => {
+            if (hasInteracted) return;
+            applyAutoFitView();
+        });
+
+        const defaultViewBtn = document.querySelector('#defaultViewBtn');
+        defaultViewBtn.addEventListener('click', setDefaultView);
+
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                setDefaultView();
+            }
+        });
+
+        viewer.addEventListener('pointerdown', (event) => {
+            pointerStart = { x: event.clientX, y: event.clientY };
+        });
+
+        viewer.addEventListener('click', (event) => {
+            if (!pointerStart) return;
+            const dx = event.clientX - pointerStart.x;
+            const dy = event.clientY - pointerStart.y;
+            const distance = Math.hypot(dx, dy);
+            if (distance <= 6) {
+                window.open(profileUrl, '_blank', 'noopener,noreferrer');
+            }
+            pointerStart = null;
+        });
+
+        function parseOrbit(orbit) {
+            const [theta, phi, radius] = orbit.split(' ');
+            return {
+                theta: parseFloat(theta),
+                phi: parseFloat(phi),
+                radius: parseFloat(radius)
+            };
+        }
+
+        function toOrbitString(state) {
+            return `${state.theta.toFixed(2)}deg ${state.phi.toFixed(2)}deg ${state.radius.toFixed(3)}m`;
+        }
+
+        function easeInOutSine(t) {
+            return -(Math.cos(Math.PI * t) - 1) / 2;
+        }
+
+        function animateOrbit(fromOrbit, toOrbit, duration, onDone) {
+            const from = parseOrbit(fromOrbit);
+            const to = parseOrbit(toOrbit);
+            const start = performance.now();
+
+            function step(now) {
+                if (hasInteracted) return;
+                const t = Math.min((now - start) / duration, 1);
+                const eased = easeInOutSine(t);
+
+                const state = {
+                    theta: from.theta + (to.theta - from.theta) * eased,
+                    phi: from.phi + (to.phi - from.phi) * eased,
+                    radius: from.radius + (to.radius - from.radius) * eased
+                };
+
+                viewer.cameraOrbit = toOrbitString(state);
+                viewer.cameraTarget = '0m 0m 0m';
+                viewer.jumpCameraToGoal();
+
+                if (t < 1) {
+                    animationFrameId = requestAnimationFrame(step);
+                } else if (onDone) {
+                    onDone();
+                }
+            }
+
+            animationFrameId = requestAnimationFrame(step);
+        }
+
+        function wait(ms, callback) {
+            setTimeout(() => {
+                if (hasInteracted) return;
+                callback();
+            }, ms);
+        }
+
+        function stopSequence() {
+            hasInteracted = true;
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            viewer.setAttribute('interaction-prompt', 'auto');
+        }
+
+        viewer.addEventListener('pointerdown', stopSequence, { once: true });
+        viewer.addEventListener('wheel', stopSequence, { once: true });
+        viewer.addEventListener('touchstart', stopSequence, { once: true });
+
+        viewer.addEventListener('load', () => {
+            applyAutoFitView();
+
+            wait(200, () => {
+                // 1) Présentation face avant
+                animateOrbit('-180deg 0deg 0.55m', '-172deg 6deg 0.56m', 800, () => {
+                    wait(120, () => {
+                        animateOrbit('-172deg 6deg 0.56m', '-188deg 6deg 0.56m', 900, () => {
+                            wait(120, () => {
+                                animateOrbit('-188deg 6deg 0.56m', '-180deg 0deg 0.55m', 800, () => {
+                                    wait(220, () => {
+                                        // 2) Passage vers face arrière
+                                        animateOrbit('-180deg 0deg 0.55m', '0deg 180deg 0.55m', 1100, () => {
+
+                                            // 3) Présentation face arrière (même style que face avant)
+                                            wait(200, () => {
+                                                animateOrbit('0deg 180deg 0.55m', '8deg 174deg 0.56m', 800, () => {
+                                                    wait(120, () => {
+                                                        animateOrbit('8deg 174deg 0.56m', '-8deg 174deg 0.56m', 900, () => {
+                                                            wait(120, () => {
+                                                                animateOrbit('-8deg 174deg 0.56m', '0deg 180deg 0.55m', 800, () => {
+                                                                    // 4) Retour face avant + nouvelle présentation
+                                                                    wait(220, () => {
+                                                                        animateOrbit('0deg 180deg 0.55m', '-180deg 0deg 0.55m', 1100, () => {
+
+                                                                            wait(200, () => {
+                                                                                animateOrbit('-180deg 0deg 0.55m', '-172deg 6deg 0.56m', 800, () => {
+                                                                                    wait(120, () => {
+                                                                                        animateOrbit('-172deg 6deg 0.56m', '-188deg 6deg 0.56m', 900, () => {
+                                                                                            wait(120, () => {
+                                                                                                animateOrbit('-188deg 6deg 0.56m', '-180deg 0deg 0.55m', 800, () => {
+                                                                                                    wait(1200, () => {
+                                                                                                        viewer.setAttribute('interaction-prompt', 'auto');
+                                                                                                    });
+                                                                                                });
+                                                                                            });
+                                                                                        });
+                                                                                    });
+                                                                                });
+                                                                            });
+                                                                        });
+                                                                    });
+                                                                });
+                                                            });
+                                                        });
+                                                    });
+                                                });
+                                            });
+                                        });
+                                    });
+                                });
+                            });
+                        });
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html>
