@@ -379,41 +379,41 @@
             });
         });
         
-const bulle = document.getElementById("bulle");
-
-// Position auto
-function positionnerBulle() {
-    const h = window.innerHeight;
-    bulle.style.top = (h * 0.33) + "px";
-}
-positionnerBulle();
-window.addEventListener("resize", positionnerBulle);
-
-/* --- SYNCHRO AVEC TES MOUVEMENTS --- */
-
-// 1️⃣ Recto en mouvement → bulle visible tout le long
-setTimeout(() => {
-    bulle.style.opacity = 1;
-}, 0);          // début recto
-
-setTimeout(() => {
-    bulle.style.opacity = 0;
-}, 1400);       // juste avant la rotation
-
-// 2️⃣ Rotation → bulle cachée
-// (rien à faire, elle reste à 0 entre 1400 et 2600)
-
-// 3️⃣ Verso en mouvement → bulle visible
-setTimeout(() => {
-    bulle.style.opacity = 1;
-}, 2600);       // début verso
-
-// 4️⃣ Fin → bulle disparaît définitivement
-setTimeout(() => {
-    bulle.style.opacity = 0;
-}, 3900);       // fin verso
-
-
+        const bulle = document.getElementById("bulle");
+        
+        // Position automatique selon la hauteur de l'écran
+        function positionnerBulle() {
+            const hauteur = window.innerHeight;
+            const position = hauteur * 0.33; // Ajuste si besoin
+            bulle.style.top = position + "px";
+        }
+        
+        positionnerBulle();
+        window.addEventListener("resize", positionnerBulle);
+        
+        /* -----------------------------
+           SYNCHRO AVEC TES MOUVEMENTS
+           ----------------------------- */
+        
+        // 1️⃣ Apparition pendant tout le premier mouvement (recto)
+        setTimeout(() => {
+            bulle.style.opacity = 1;
+        }, 0); // dès le début
+        
+        // 2️⃣ Disparition juste avant la rotation
+        setTimeout(() => {
+            bulle.style.opacity = 0;
+        }, 1400);
+        
+        // 3️⃣ Réapparition pendant le deuxième mouvement (verso)
+        setTimeout(() => {
+            bulle.style.opacity = 1;
+        }, 2600);
+        
+        // 4️⃣ Disparition définitive après le verso
+        setTimeout(() => {
+            bulle.style.opacity = 0;
+        }, 3900);
         
     </script>
 </body>
