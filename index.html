@@ -85,7 +85,37 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
             z-index: 3;
         }
-
+        
+        .bulle-info {
+            position: absolute;
+            top: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            color: black;
+            padding: 18px 22px;
+            border-radius: 14px;
+            font-size: 22px;
+            font-weight: 700;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.6s ease;
+            z-index: 999999999; /* ULTRA PRIORITAIRE */
+        }
+        
+        .bulle-info::after {
+            content: "";
+            position: absolute;
+            bottom: -14px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 14px solid transparent;
+            border-right: 14px solid transparent;
+            border-top: 14px solid white;
+        }
 
         @media (max-width: 768px) {
             .default-view-btn,
@@ -94,12 +124,19 @@
                 padding: 26px 40px;
                 font-size: 12px;
             }
+                .bulle-info {
+                    top: 250px; /* descend la bulle sur mobile */
+                }
         }
     </style>
 </head>
 
 <body>
     <div class="container">
+        
+        <div class="bulle-info" id="bulle">
+            Cliquez pour accéder à mes biens en vente !
+        </div>
 
         <!-- BOUTON ENREGISTRER CONTACT -->
         <a class="add-contact" href="contact.vcf" download>
@@ -341,6 +378,43 @@
                 });
             });
         });
+const bulle = document.getElementById("bulle");
+
+// Position automatique selon la hauteur de l'écran
+function positionnerBulle() {
+    const hauteur = window.innerHeight;
+    const position = hauteur * 0.33; // Ajuste si besoin
+    bulle.style.top = position + "px";
+}
+
+positionnerBulle();
+window.addEventListener("resize", positionnerBulle);
+
+/* -----------------------------
+   SYNCHRO AVEC TES MOUVEMENTS
+   ----------------------------- */
+
+// 1️⃣ Apparition au premier mouvement
+setTimeout(() => {
+    bulle.style.opacity = 1;
+}, 200); // juste après le début
+
+// 2️⃣ Disparition pendant la rotation
+setTimeout(() => {
+    bulle.style.opacity = 0;
+}, 800); // avant la rotation
+
+// 3️⃣ Réapparition au deuxième mouvement
+setTimeout(() => {
+    bulle.style.opacity = 1;
+}, 1600); // début du 2e mouvement
+
+// 4️⃣ Disparition définitive
+setTimeout(() => {
+    bulle.style.opacity = 0;
+}, 3000); // après le 2e mouvement
+
+        
     </script>
 </body>
 </html>
